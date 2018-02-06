@@ -154,7 +154,7 @@ class TFBoard():
             self.checkWin()
             if self.endGame is True:
                 self.winner = self.playerTurn
-                break
+                breaka
             if self.checkDraw():
                 break
             self.playerTurn = 1 if self.playerTurn == 2 else 2
