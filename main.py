@@ -1,4 +1,3 @@
-import random
 from string import ascii_uppercase
 
 
@@ -20,7 +19,6 @@ class TFBoard():
 
     def drawBoard(self):
         col = ["\033[0m", "\033[91m", "\033[31m", "\033[97m", "\033[92m"]
-        #        no color    lightred      red         white       green
 
         def drawInLoops(i, j):
             if i == self.height:
@@ -137,12 +135,11 @@ class TFBoard():
         self.matrix = list(list(x)[::-1] for x in zip(*self.matrix))
 
     def gameLoop(self):
-        playerTurn = 1
         print("---NEW GAME")
         self.drawBoard()
         while self.endGame is False:
             print(f"---Turn {self.turnNumber}:")
-            turn = input(f"Player {playerTurn}, make your move.\n(1,2,3,4,5,6,7,L,R)\n---")
+            turn = input(f"Player {self.playerTurn}, make your move.\n(1,2,3,4,5,6,7,L,R)\n---")
             if turn not in ["1", "2", "3", "4", "5", "6", "7", "l", "L", "r", "R"]:
                 print(f"WRONG INPUT {turn}!\nInput must be L, R or an integer between 1 and 7.")
                 continue
@@ -153,33 +150,23 @@ class TFBoard():
                 self.rotateRight()
                 self.applyGravity()
             elif int(turn) in [1, 2, 3, 4, 5, 6, 7]:
-                self.putToken(playerTurn, int(turn) - 1)
+                self.putToken(self.playerTurn, int(turn) - 1)
             self.checkWin()
             if self.endGame is True:
-                self.Winner = playerTurn
+                self.winner = self.playerTurn
                 break
             if self.checkDraw():
                 break
-            playerTurn = 1 if playerTurn == 2 else 2
+            self.playerTurn = 1 if self.playerTurn == 2 else 2
             self.turnNumber += 1
             self.drawBoard()
-            print(self.flatMatrix())
         if self.winner == 0:
             print(f"DRAW!")
         else:
-            print(f"Player {self.Winner} won in {self.turnNumber} turns!")
+            print(f"Player {self.winner} won in {self.turnNumber} turns!")
         self.drawBoard()
+        return self.winner
 
 
-if __name__ == '__main__':
-    testMatrix = [[1, 0, 0, 0, 0, 0, 0],
-                  [2, 0, 0, 0, 0, 0, 0],
-                  [2, 0, 0, 0, 0, 0, 0],
-                  [1, 2, 2, 0, 0, 0, 0],
-                  [2, 0, 0, 0, 0, 0, 0],
-                  [1, 0, 0, 0, 0, 0, 0],
-                  [1, 1, 0, 0, 0, 0, 0]]
-
-    randomMatrix = [[random.choice((0, 1, 2)) for _ in range(7)] for _ in range(7)]
-    board = TFBoard()
-    board.gameLoop()
+board = TFBoard()
+board.gameLoop()
