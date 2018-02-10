@@ -5,19 +5,25 @@ class TFBoard():
     def __init__(self):
         self.width = 7
         self.height = 7
+        # lists from 1 to 7 and A to G for board labels
         self.columns = range(1, self.height + 1)
         self.rows = ascii_uppercase[:self.width]
+        # matrix that contains the game state data, initialized with 0s
         self.matrix = [[0 for h in range(0, self.height)]
                        for w in range(0, self.width)]
+        # start values for the game
         self.endGame = False
         self.winner = 0
         self.playerTurn = 1
         self.turnNumber = 1
 
+    # returns list of matrix entries ()
     def flatMatrix(self):
         return [value for array in self.matrix for value in array]
 
+    # draw the board into the console
     def drawBoard(self):
+        # colors
         col = ["\033[0m", "\033[91m", "\033[31m", "\033[97m", "\033[92m"]
 
         def drawInLoops(i, j):
@@ -51,6 +57,8 @@ class TFBoard():
             print("")
         print("")  # new line after board for better looks
 
+
+    # put token into a column
     def putToken(self, player, column):
         # find first nonzero entrie in column from top
         notification = f"New Player {player} token in column {column+1}"
@@ -119,10 +127,12 @@ class TFBoard():
         checktlbrDiagonals()
         checkbltrDiagonals()
 
+    # draw if all spots are not 0
     def checkDraw(self):
         if all(x != 0 for x in self.flatMatrix()):
             return True
 
+    # lets tokens fall down
     def applyGravity(self):
         for i in range(7):
             self.matrix[i] = [x for x in self.matrix[i] if x != 0]
@@ -134,15 +144,19 @@ class TFBoard():
     def rotateRight(self):
         self.matrix = list(list(x)[::-1] for x in zip(*self.matrix))
 
+    # actual game loop
     def gameLoop(self):
         print("---NEW GAME")
         self.drawBoard()
+        # as long as game is not ended:
+        # each while loop is a turn
         while self.endGame is False:
             print(f"---Turn {self.turnNumber}:")
             turn = input(f"Player {self.playerTurn}, make your move.\n(1,2,3,4,5,6,7,L,R)\n---")
             if turn not in ["1", "2", "3", "4", "5", "6", "7", "l", "L", "r", "R"]:
                 print(f"WRONG INPUT {turn}!\nInput must be L, R or an integer between 1 and 7.")
-                continue
+                continue # restart turn (playerTurn is not changed)
+            # turn changes the board
             if turn == "L" or turn == "l":
                 self.rotateLeft()
                 self.applyGravity()
@@ -151,12 +165,16 @@ class TFBoard():
                 self.applyGravity()
             elif int(turn) in [1, 2, 3, 4, 5, 6, 7]:
                 self.putToken(self.playerTurn, int(turn) - 1)
+            # check for wins
             self.checkWin()
             if self.endGame is True:
                 self.winner = self.playerTurn
                 break
+            # check for draws
             if self.checkDraw():
                 break
+            # end turn by changing player turn, increasing turn number
+            # and draw the current board
             self.playerTurn = 1 if self.playerTurn == 2 else 2
             self.turnNumber += 1
             self.drawBoard()
