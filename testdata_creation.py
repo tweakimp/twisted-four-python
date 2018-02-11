@@ -57,7 +57,6 @@ class TFBoard():
             print("")
         print("")  # new line after board for better looks
 
-
     # put token into a column
     def putToken(self, player, column):
         # find first nonzero entrie in column from top
@@ -143,48 +142,3 @@ class TFBoard():
 
     def rotateRight(self):
         self.matrix = list(list(x)[::-1] for x in zip(*self.matrix))
-
-    # actual game loop
-    def gameLoop(self):
-        print("---NEW GAME")
-        self.drawBoard()
-        # as long as game is not ended:
-        # each while loop is a turn
-        while self.endGame is False:
-            print(f"---Turn {self.turnNumber}:")
-            turn = input(f"Player {self.playerTurn}, make your move.\n(1,2,3,4,5,6,7,L,R)\n---")
-            if turn not in ["1", "2", "3", "4", "5", "6", "7", "l", "L", "r", "R"]:
-                print(f"WRONG INPUT {turn}!\nInput must be L, R or an integer between 1 and 7.")
-                continue # restart turn (playerTurn is not changed)
-            # turn changes the board
-            if turn == "L" or turn == "l":
-                self.rotateLeft()
-                self.applyGravity()
-            elif turn == "R" or turn == "r":
-                self.rotateRight()
-                self.applyGravity()
-            elif int(turn) in [1, 2, 3, 4, 5, 6, 7]:
-                self.putToken(self.playerTurn, int(turn) - 1)
-            # check for wins
-            self.checkWin()
-            if self.endGame is True:
-                self.winner = self.playerTurn
-                break
-            # check for draws
-            if self.checkDraw():
-                break
-            # end turn by changing player turn, increasing turn number
-            # and draw the current board
-            self.playerTurn = 1 if self.playerTurn == 2 else 2
-            self.turnNumber += 1
-            self.drawBoard()
-        if self.winner == 0:
-            print(f"DRAW!")
-        else:
-            print(f"Player {self.winner} won in {self.turnNumber} turns!")
-        self.drawBoard()
-        return self.winner
-
-
-board = TFBoard()
-board.gameLoop()
