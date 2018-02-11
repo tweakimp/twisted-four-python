@@ -1,7 +1,10 @@
+import random
+from copy import deepcopy
+from datetime import datetime
 from string import ascii_uppercase
 
 
-class TFBoard():
+class randomBoard():
     def __init__(self):
         self.width = 7
         self.height = 7
@@ -11,6 +14,8 @@ class TFBoard():
         # matrix that contains the game state data, initialized with 0s
         self.matrix = [[0 for h in range(0, self.height)]
                        for w in range(0, self.width)]
+        self.saveMatrix = [[0 for h in range(0, self.height)]
+                           for w in range(0, self.width)]
         # start values for the game
         self.endGame = False
         self.winner = 0
@@ -59,19 +64,20 @@ class TFBoard():
 
     # put token into a column
     def putToken(self, player, column):
-        # find first nonzero entrie in column from top
-        notification = f"New Player {player} token in column {column+1}"
+        # find first nonzero entry in column from top
+        #notification = f"New Player {player} token in column {column+1}"
         for i in range(self.height - 1, -1, -1):
             if i == 0 and self.matrix[column][i] == 0:
                 self.matrix[column][0] = player
-                print(f"{notification}, row {self.rows[i]}")
+                #print(f"{notification}, row {self.rows[i]}")
                 return
             if self.matrix[column][i] != 0:
                 if i == self.height - 1:
-                    print(f"COLUMN FULL!\nCan\'t place token in column {i}.")
+                    pass
+                    #print(f"COLUMN FULL!\nCan\'t place token in column {i}.")
                 else:
                     self.matrix[column][i + 1] = player
-                    print(f"{notification}, row {self.rows[i+1]}")
+                    #print(f"{notification}, row {self.rows[i+1]}")
                 return
 
     def checkWin(self):
@@ -84,8 +90,8 @@ class TFBoard():
                     # start points r
                     start = column[r]
                     if start != 0 and all(token == start for token in column[r:r + 4]):
-                        print(f"Win by column for player {start}")
-                        print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+1}")
+                        #print(f"Win by column for player {start}")
+                        #print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+1}")
                         self.endGame = True
         # check for win by row
 
@@ -97,8 +103,8 @@ class TFBoard():
                 for c in range(4):
                     start = row[c]
                     if start != 0 and all(token == start for token in row[c:c + 4]):
-                        print(f"Win by row for player {start}")
-                        print(f"{self.rows[r]}{c+1}-{self.rows[r]}{c+4}")
+                        #print(f"Win by row for player {start}")
+                        #print(f"{self.rows[r]}{c+1}-{self.rows[r]}{c+4}")
                         self.endGame = True
 
         def checkbltrDiagonals():
@@ -107,8 +113,8 @@ class TFBoard():
                     diagonal = [self.matrix[c + x][r + x] for x in range(4)]
                     start = diagonal[0]
                     if start != 0 and all(token == start for token in diagonal):
-                        print(f"Win by diagonal bltr for player {start}")
-                        print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+4}")
+                        #print(f"Win by diagonal bltr for player {start}")
+                        #print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+4}")
                         self.endGame = True
 
         def checktlbrDiagonals():
@@ -117,8 +123,8 @@ class TFBoard():
                     diagonal = [self.matrix[c + x][r - x] for x in range(4)]
                     start = diagonal[0]
                     if start != 0 and all(token == start for token in diagonal):
-                        print(f"Win by diagonal tlbr for player {start}")
-                        print(f"{self.rows[r]}{c+1}-{self.rows[r-3]}{c+4}")
+                        #print(f"Win by diagonal tlbr for player {start}")
+                        #print(f"{self.rows[r]}{c+1}-{self.rows[r-3]}{c+4}")
                         self.endGame = True
 
         checkColumns()
@@ -142,3 +148,82 @@ class TFBoard():
 
     def rotateRight(self):
         self.matrix = list(list(x)[::-1] for x in zip(*self.matrix))
+
+    def possibleMoves(self):
+        movelist = ["r", "l"]
+        for i in range(len(self.matrix)):
+            if 0 in self.matrix[i]:
+                movelist.append(i)
+        return movelist
+
+    # actual game loop
+    def gameLoop(self):
+        #print("---NEW GAME")
+        #self.drawBoard()
+        # as long as game is not ended:
+        # each while loop is a turn
+        while self.endGame is False:
+            #print(f"---Turn {self.turnNumber}:")
+            movelist = self.possibleMoves()
+            turn = random.choice(movelist)
+            # turn changes the board
+            if turn == "L" or turn == "l":
+                self.rotateLeft()
+                self.applyGravity()
+            elif turn == "R" or turn == "r":
+                self.rotateRight()
+                self.applyGravity()
+            elif int(turn) in [1, 2, 3, 4, 5, 6, 7]:
+                self.putToken(self.playerTurn, int(turn) - 1)
+            # check for wins
+            self.checkWin()
+            if self.endGame is True:
+                self.winner = self.playerTurn
+                break
+            # check for draws
+            if self.checkDraw():
+                break
+            self.saveMatrix = deepcopy(self.matrix)
+            # end turn by changing player turn, increasing turn number
+            # and draw the current board
+            self.playerTurn = 1 if self.playerTurn == 2 else 2
+            self.turnNumber += 1
+            #self.drawBoard()
+        #if self.winner == 0:
+            #print(f"DRAW!")
+        #else:
+            #print(f"Player {self.playerTurn} won in {self.turnNumber} turns!")
+        #self.drawBoard()
+        return self.saveMatrix, turn, self.playerTurn
+
+
+
+
+def stopwatch(f):
+    def wrap(*args, **kw):
+        start = datetime.now()
+        result = f(*args, **kw)
+        end = datetime.now()
+        print(end - start)
+        return result
+    return wrap
+
+@stopwatch
+def createTests():
+    for _ in range(10000):
+        board = randomBoard()
+        saved, turn, player = board.gameLoop()
+        if player == 2:
+            for i in range(len(saved)):
+                for j in range(len(saved[i])):
+                    if saved[i][j] != 0:
+                        saved[i][j] = 1 if saved[i][j] == 2 else 2
+
+        with open("testdata.txt", "a") as testdata:
+            testdata.write("[" + "\n")
+            for line in saved:
+                testdata.write(str(line) + ",\n")
+            testdata.write("]" + "\n" + "turn " + str(turn) + "\n======\n")
+
+
+createTests()

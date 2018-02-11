@@ -75,6 +75,13 @@ class TFBoard():
                     print(f"{notification}, row {self.rows[i+1]}")
                 return
 
+        def possbileMoves(self):
+            movelist = ["r", "R", "l", "L"]
+            for i in range(len(self.matrix)):
+                if 0 in self.matrix[i]:
+                    movelist.append(i)
+            return movelist
+
     def checkWin(self):
         # check for win by column
         def checkColumns():
@@ -184,6 +191,10 @@ class TFBoard():
             print(f"Player {self.winner} won in {self.turnNumber} turns!")
         self.drawBoard()
         return self.winner
+
+
+
+
 
 
 board = TFBoard()
