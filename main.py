@@ -51,12 +51,12 @@ class TFBoard():
                         piece = " "
                     print(f"{piece}", end="")
                     print(f"{col[2]}]{col[0]}", end="")
+
         for i in range(0, self.height + 1):
             for j in range(0, self.width + 1):
                 drawInLoops(i, j)
             print("")
         print("")  # new line after board for better looks
-
 
     # put token into a column
     def putToken(self, player, column):
@@ -91,10 +91,12 @@ class TFBoard():
                 for r in range(4):
                     # start points r
                     start = column[r]
-                    if start != 0 and all(token == start for token in column[r:r + 4]):
+                    if start != 0 and all(token == start
+                                          for token in column[r:r + 4]):
                         print(f"Win by column for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+1}")
                         self.endGame = True
+
         # check for win by row
 
         def checkRows():
@@ -104,7 +106,8 @@ class TFBoard():
                 row = [self.matrix[c][r] for c in range(7)]
                 for c in range(4):
                     start = row[c]
-                    if start != 0 and all(token == start for token in row[c:c + 4]):
+                    if start != 0 and all(token == start
+                                          for token in row[c:c + 4]):
                         print(f"Win by row for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r]}{c+4}")
                         self.endGame = True
@@ -114,7 +117,8 @@ class TFBoard():
                 for r in range(4):
                     diagonal = [self.matrix[c + x][r + x] for x in range(4)]
                     start = diagonal[0]
-                    if start != 0 and all(token == start for token in diagonal):
+                    if start != 0 and all(token == start
+                                          for token in diagonal):
                         print(f"Win by diagonal bltr for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+4}")
                         self.endGame = True
@@ -124,7 +128,8 @@ class TFBoard():
                 for r in range(3, 7):
                     diagonal = [self.matrix[c + x][r - x] for x in range(4)]
                     start = diagonal[0]
-                    if start != 0 and all(token == start for token in diagonal):
+                    if start != 0 and all(token == start
+                                          for token in diagonal):
                         print(f"Win by diagonal tlbr for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r-3]}{c+4}")
                         self.endGame = True
@@ -151,6 +156,16 @@ class TFBoard():
     def rotateRight(self):
         self.matrix = list(list(x)[::-1] for x in zip(*self.matrix))
 
+    def makeMove(self, turn):
+        if turn == "L" or turn == "l":
+            self.rotateLeft()
+            self.applyGravity()
+        elif turn == "R" or turn == "r":
+            self.rotateRight()
+            self.applyGravity()
+        elif int(turn) in [1, 2, 3, 4, 5, 6, 7]:
+            self.putToken(self.playerTurn, int(turn) - 1)
+
     # actual game loop
     def gameLoop(self):
         print("---NEW GAME")
@@ -159,19 +174,18 @@ class TFBoard():
         # each while loop is a turn
         while self.endGame is False:
             print(f"---Turn {self.turnNumber}:")
-            turn = input(f"Player {self.playerTurn}, make your move.\n(1,2,3,4,5,6,7,L,R)\n---")
-            if turn not in ["1", "2", "3", "4", "5", "6", "7", "l", "L", "r", "R"]:
-                print(f"WRONG INPUT {turn}!\nInput must be L, R or an integer between 1 and 7.")
-                continue # restart turn (playerTurn is not changed)
+            turn = input(
+                f"Player {self.playerTurn}, make your move.\n(1,2,3,4,5,6,7,L,R)\n---"
+            )
+            if turn not in [
+                    "1", "2", "3", "4", "5", "6", "7", "l", "L", "r", "R"
+            ]:
+                print(
+                    f"WRONG INPUT {turn}!\nInput must be L, R or an integer between 1 and 7."
+                )
+                continue  # restart turn (playerTurn is not changed)
             # turn changes the board
-            if turn == "L" or turn == "l":
-                self.rotateLeft()
-                self.applyGravity()
-            elif turn == "R" or turn == "r":
-                self.rotateRight()
-                self.applyGravity()
-            elif int(turn) in [1, 2, 3, 4, 5, 6, 7]:
-                self.putToken(self.playerTurn, int(turn) - 1)
+            self.makeMove(turn)
             # check for wins
             self.checkWin()
             if self.endGame is True:
@@ -193,9 +207,6 @@ class TFBoard():
         return self.winner
 
 
-
-
-
-
-board = TFBoard()
-board.gameLoop()
+if __name__ == "__main__":
+    board = TFBoard()
+    board.gameLoop()

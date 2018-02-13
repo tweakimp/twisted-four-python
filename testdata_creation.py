@@ -82,7 +82,7 @@ class randomBoard():
         movelist = ["r", "l"]
         for i in range(len(self.matrix)):
             if 0 in self.matrix[i]:
-                movelist.append(i)
+                movelist.append(i + 1)
         return movelist
 
     def gameLoop(self):
@@ -120,11 +120,15 @@ def stopwatch(f):
     return wrap
 
 
+def flatMatrix(x):
+    return [value for array in x for value in array]
+
+
 @stopwatch
 def createTests(x):
     with open("testdata.py", "w") as testdata:
-        testdata.write("[\n")
-        for _ in range(x):
+        testdata.write(f"tests = [\n")
+        for n in range(x):
             board = randomBoard()
             saved, turn, player = board.gameLoop()
             if player == 2:
@@ -132,11 +136,27 @@ def createTests(x):
                     for j in range(len(saved[i])):
                         if saved[i][j] != 0:
                             saved[i][j] = 1 if saved[i][j] == 2 else 2
-                testdata.write("    [[\n")
-                for line in saved:
-                    testdata.write("        " + str(line) + ",\n")
-                testdata.write("    ], '" + str(turn) + "'],\n")
-        testdata.write("]" + "\n")
+            testdata.write(f"    [[\n")
+            for line in saved:
+                testdata.write(f"        {str(line)},\n")
+            testdata.write(f"    ], '{str(turn)}', {str(n)}],\n")
+        testdata.write("]\n")
 
 
-createTests(100)
+@stopwatch
+def createFlatTests(x):
+    with open("testdata.py", "w") as testdata:
+        testdata.write(f"tests = [\n")
+        for n in range(x):
+            board = randomBoard()
+            saved, turn, player = board.gameLoop()
+            saved = flatMatrix(saved)
+            if player == 2:
+                for i in range(len(saved)):
+                    if saved[i] != 0:
+                        saved[i] = 1 if saved[i] == 2 else 2
+            testdata.write(f"    [{str(saved)}, '{str(turn)}', {str(n)}],\n")
+        testdata.write("]\n")
+
+
+createFlatTests(1000)
