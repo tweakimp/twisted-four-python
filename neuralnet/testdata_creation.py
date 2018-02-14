@@ -145,37 +145,18 @@ def createTests(x):
 
 @stopwatch
 def createFlatTests(x):
-    with open("neuralnet/testdata.py", "w") as testdata:
+    with open("testdata.py", "w") as testdata:
         testdata.write(f"tests = [\n")
         for n in range(x):
             board = randomBoard()
             saved, turn, player = board.gameLoop()
             saved = flatMatrix(saved)
-            for i in range(len(saved)):
-                if saved[i] != 0:
-                    if player == 2:
-                        saved[i] = 1 if saved[i] == 2 else -1
-                    else:
-                        saved[i] = 1 if saved[i] == 1 else -1
+            if player == 2:
+                for i in range(len(saved)):
+                    if saved[i] != 0:
+                        saved[i] = 1 if saved[i] == 2 else 2
             testdata.write(f"    [{str(saved)}, '{str(turn)}', {str(n)}],\n")
         testdata.write("]\n")
 
 
-def flatTests(x):
-    testlist = []
-    for _ in range(x):
-        board = randomBoard()
-        saved, turn, player = board.gameLoop()
-        saved = flatMatrix(saved)
-        for i in range(len(saved)):
-            if saved[i] != 0:
-                if player == 2:
-                    saved[i] = 1 if saved[i] == 2 else -1
-                else:
-                    saved[i] = 1 if saved[i] == 1 else -1
-        testlist.append([saved, turn])
-    return testlist
-
-
-if __name__ == "__main__":
-    createFlatTests(500)
+createFlatTests(1000)
