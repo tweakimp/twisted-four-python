@@ -1,9 +1,23 @@
-from string import ascii_uppercase
 import pickle
+from datetime import datetime
+from string import ascii_uppercase
+
+from neuralnet import NEURALNET
+
+
+def stopwatch(f):
+    def wrap(*args, **kw):
+        start = datetime.now()
+        result = f(*args, **kw)
+        end = datetime.now()
+        print(end - start)
+        return result
+
+    return wrap
 
 
 class TFBoard():
-    def __init__(self, net1, net2):
+    def __init__(self):
         self.width = 7
         self.height = 7
         # lists from 1 to 7 and A to G for board labels
@@ -17,8 +31,6 @@ class TFBoard():
         self.winner = 0
         self.playerTurn = 1
         self.turnNumber = 1
-        self.net1 = net1
-        self.net2 = net2
 
     # returns list of matrix entries ()
     def flatMatrix(self):
@@ -61,26 +73,32 @@ class TFBoard():
     # put token into a column
     def putToken(self, player, column):
         # find first nonzero entrie in column from top
-        notification = f"New Player {player} token in column {column+1}"
+        # notification = f"New Player {player} token in column {column+1}"
         for i in range(self.height - 1, -1, -1):
             if i == 0 and self.matrix[column][i] == 0:
                 self.matrix[column][0] = player
-                print(f"{notification}, row {self.rows[i]}")
+                # print(f"{notification}, row {self.rows[i]}")
                 return
             if self.matrix[column][i] != 0:
                 if i == self.height - 1:
-                    print(f"COLUMN FULL!\nCan\'t place token in column {i}.")
+                    print(
+                        f"COLUMN FULL!\nCan\'t place token in column {column}."
+                    )
+                    self.drawBoard()
+                    print(self.possibleMoves())
+                    print(player, column)
+                    raise SystemExit
                 else:
                     self.matrix[column][i + 1] = player
-                    print(f"{notification}, row {self.rows[i+1]}")
+                    # print(f"{notification}, row {self.rows[i+1]}")
                 return
 
-        def possbileMoves(self):
-            movelist = ["r", "R", "l", "L"]
-            for i in range(len(self.matrix)):
-                if 0 in self.matrix[i]:
-                    movelist.append(i)
-            return movelist
+    def possibleMoves(self):
+        movelist = [7, 8] if self.turnNumber > 1 else []
+        for i in range(len(self.matrix)):
+            if 0 in self.matrix[i]:
+                movelist.append(i)
+        return movelist
 
     def checkWin(self):
         # check for win by column
@@ -93,8 +111,8 @@ class TFBoard():
                     start = column[r]
                     if start != 0 and all(token == start
                                           for token in column[r:r + 4]):
-                        print(f"Win by column for player {start}")
-                        print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+1}")
+                        # print(f"Win by column for player {start}")
+                        # print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+1}")
                         self.endGame = True
 
         # check for win by row
@@ -108,8 +126,8 @@ class TFBoard():
                     start = row[c]
                     if start != 0 and all(token == start
                                           for token in row[c:c + 4]):
-                        print(f"Win by row for player {start}")
-                        print(f"{self.rows[r]}{c+1}-{self.rows[r]}{c+4}")
+                        # print(f"Win by row for player {start}")
+                        # print(f"{self.rows[r]}{c+1}-{self.rows[r]}{c+4}")
                         self.endGame = True
 
         def checkbltrDiagonals():
@@ -119,8 +137,8 @@ class TFBoard():
                     start = diagonal[0]
                     if start != 0 and all(token == start
                                           for token in diagonal):
-                        print(f"Win by diagonal bltr for player {start}")
-                        print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+4}")
+                        # print(f"Win by diagonal bltr for player {start}")
+                        # print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+4}")
                         self.endGame = True
 
         def checktlbrDiagonals():
@@ -130,8 +148,8 @@ class TFBoard():
                     start = diagonal[0]
                     if start != 0 and all(token == start
                                           for token in diagonal):
-                        print(f"Win by diagonal tlbr for player {start}")
-                        print(f"{self.rows[r]}{c+1}-{self.rows[r-3]}{c+4}")
+                        # print(f"Win by diagonal tlbr for player {start}")
+                        # print(f"{self.rows[r]}{c+1}-{self.rows[r-3]}{c+4}")
                         self.endGame = True
 
         checkColumns()
@@ -167,29 +185,41 @@ class TFBoard():
             self.putToken(self.playerTurn, int(turn) - 1)
 
     # actual game loop
-    def gameLoop(self):
-        print("---NEW GAME")
-        self.drawBoard()
+    def gameLoop(self, net1, net2):
+        # print("---NEW GAME")
+        # self.drawBoard()
         # as long as game is not ended:
         # each while loop is a turn
-        while self.endGame is False:
-            print(f"---Turn {self.turnNumber}:")
+        while self.endGame is False and self.turnNumber < 100:
+            # print(f"---Turn {self.turnNumber}:")
+
             if self.playerTurn == 1:
                 nnboard = self.flatMatrix()
                 for x in nnboard:
                     x = x if x == 0 or x == 1 else -1
-                turn = nn.feed(nnboard)
+                turn = net1.feed(nnboard, self.possibleMoves())
             elif self.playerTurn == 2:
-                turn = input(
-                    f"Player {self.playerTurn}, make your move.\n(1,2,3,4,5,6,7,L,R)\n---"
+                nnboard = self.flatMatrix()
+                for x in nnboard:
+                    x = -1 if x == 1 else 0 if x == 0 else 2
+                turn = net2.feed(nnboard, self.possibleMoves())
+
+            # print(f"possible {self.possibleMoves()}, calculated {turn}")
+            turn = str(turn + 1)
+            if turn == "8":
+                turn = "l"
+            elif turn == "9":
+                turn = "r"
+
+            if turn not in [
+                    "1", "2", "3", "4", "5", "6", "7", "l", "L", "r", "R", 1,
+                    2, 3, 4, 5, 6, 7
+            ]:
+                print(
+                    f"WRONG INPUT {turn}!\nInput must be L, R or an integer between 1 and 7."
                 )
-                if turn not in [
-                        "1", "2", "3", "4", "5", "6", "7", "l", "L", "r", "R"
-                ]:
-                    print(
-                        f"WRONG INPUT {turn}!\nInput must be L, R or an integer between 1 and 7."
-                    )
-                    continue  # restart turn (playerTurn is not changed)
+                continue  # restart turn (playerTurn is not changed)
+            # print(f"Player {self.playerTurn} turn {turn}")
             # turn changes the board
             self.makeMove(turn)
             # check for wins
@@ -204,19 +234,25 @@ class TFBoard():
             # and draw the current board
             self.playerTurn = 1 if self.playerTurn == 2 else 2
             self.turnNumber += 1
-            self.drawBoard()
-        if self.winner == 0:
-            print(f"DRAW!")
-        else:
-            print(f"Player {self.winner} won in {self.turnNumber} turns!")
+            # self.drawBoard()
+        # if self.winner == 0:
+        #     print(f"DRAW!")
+        # else:
+        #     print(f"Player {self.winner} won in {self.turnNumber} turns!")
         self.drawBoard()
-        return self.winner
+        return self.winner, self.turnNumber
 
 
-with open('net1.pickle', 'rb') as loaded:
-    n1 = pickle.load(loaded)
-with open('net2.pickle', 'rb') as loaded:
-    n2 = pickle.load(loaded)
-
-board = TFBoard(n1, n2)
-board.gameLoop()
+if __name__ == '__main__':
+    # net1 = NEURALNET()
+    # net2 = NEURALNET()
+    with open('current.pickle', 'rb') as loaded:
+        net1 = pickle.load(loaded)
+    with open('current.pickle', 'rb') as loaded:
+        net2 = pickle.load(loaded)
+    stats = {"1": 0, "2": 0, "0": 0}
+    for _ in range(10):
+        board = TFBoard()
+        winner, turnNumber = board.gameLoop(net1, net2)
+        stats[str(winner)] += 1
+    print(stats)

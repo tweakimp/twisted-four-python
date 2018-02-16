@@ -59,26 +59,32 @@ class TFBoard():
     # put token into a column
     def putToken(self, player, column):
         # find first nonzero entrie in column from top
-        notification = f"New Player {player} token in column {column+1}"
+        # notification = f"New Player {player} token in column {column+1}"
         for i in range(self.height - 1, -1, -1):
             if i == 0 and self.matrix[column][i] == 0:
                 self.matrix[column][0] = player
-                print(f"{notification}, row {self.rows[i]}")
+                # print(f"{notification}, row {self.rows[i]}")
                 return
             if self.matrix[column][i] != 0:
                 if i == self.height - 1:
-                    print(f"COLUMN FULL!\nCan\'t place token in column {i}.")
+                    print(
+                        f"COLUMN FULL!\nCan\'t place token in column {column}."
+                    )
+                    self.drawBoard()
+                    print(self.possibleMoves())
+                    print(player, column)
+                    raise SystemExit
                 else:
                     self.matrix[column][i + 1] = player
-                    print(f"{notification}, row {self.rows[i+1]}")
+                    # print(f"{notification}, row {self.rows[i+1]}")
                 return
 
-        def possbileMoves(self):
-            movelist = ["r", "R", "l", "L"]
-            for i in range(len(self.matrix)):
-                if 0 in self.matrix[i]:
-                    movelist.append(i)
-            return movelist
+    def possibleMoves(self):
+        movelist = [7, 8] if self.turnNumber > 1 else []
+        for i in range(len(self.matrix)):
+            if 0 in self.matrix[i]:
+                movelist.append(i)
+        return movelist
 
     def checkWin(self):
         # check for win by column
@@ -93,7 +99,7 @@ class TFBoard():
                                           for token in column[r:r + 4]):
                         print(f"Win by column for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+1}")
-                        self.endGame = True
+                        self.endGame, self.winner = True, start
 
         # check for win by row
 
@@ -108,7 +114,7 @@ class TFBoard():
                                           for token in row[c:c + 4]):
                         print(f"Win by row for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r]}{c+4}")
-                        self.endGame = True
+                        self.endGame, self.winner = True, start
 
         def checkbltrDiagonals():
             for c in range(4):
@@ -119,7 +125,7 @@ class TFBoard():
                                           for token in diagonal):
                         print(f"Win by diagonal bltr for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+4}")
-                        self.endGame = True
+                        self.endGame, self.winner = True, start
 
         def checktlbrDiagonals():
             for c in range(4):
@@ -130,7 +136,7 @@ class TFBoard():
                                           for token in diagonal):
                         print(f"Win by diagonal tlbr for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r-3]}{c+4}")
-                        self.endGame = True
+                        self.endGame, self.winner = True, start
 
         checkColumns()
         checkRows()
@@ -155,10 +161,10 @@ class TFBoard():
         self.matrix = list(list(x)[::-1] for x in zip(*self.matrix))
 
     def makeMove(self, turn):
-        if turn == "L" or turn == "l":
+        if turn == 8:
             self.rotateLeft()
             self.applyGravity()
-        elif turn == "R" or turn == "r":
+        elif turn == 9:
             self.rotateRight()
             self.applyGravity()
         elif int(turn) in [1, 2, 3, 4, 5, 6, 7]:
@@ -176,7 +182,9 @@ class TFBoard():
                 nnboard = self.flatMatrix()
                 for x in nnboard:
                     x = x if x == 0 or x == 1 else -1
-                turn = nn.feed(nnboard)
+                turn = nn.feed(nnboard, self.possibleMoves())
+                print(f"calculated turn {turn}, +1 now")
+                turn += 1
             elif self.playerTurn == 2:
                 turn = input(
                     f"Player {self.playerTurn}, make your move.\n(1,2,3,4,5,6,7,L,R)\n---"
@@ -193,7 +201,6 @@ class TFBoard():
             # check for wins
             self.checkWin()
             if self.endGame is True:
-                self.winner = self.playerTurn
                 break
             # check for draws
             if self.checkDraw():

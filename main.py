@@ -23,9 +23,6 @@ class TFBoard():
 
     # draw the board into the console
     def drawBoard(self):
-        # colors
-        col = ["\033[0m", "\033[91m", "\033[31m", "\033[97m", "\033[92m"]
-
         def drawInLoops(i, j):
             if i == self.height:
                 if j == 0:
@@ -33,24 +30,24 @@ class TFBoard():
                     print("   ", end=f"")
                 else:
                     # bottom letter row
-                    print(f"{col[1]}{self.columns[j-1]}{col[0]}", end=f"  ")
+                    print(f"{self.columns[j-1]}", end=f"  ")
             else:
                 if j == 0:
                     # left number column
-                    print(f"{col[1]}{self.rows[-i-1]}{col[0]}", end=" ")
+                    print(f"{self.rows[-i-1]}", end=" ")
                 else:
                     # squares
                     # drawn matrix is 1 higher and wider than self.matrix
-                    print(f"{col[2]}[{col[0]}", end="")
+                    print(f"[", end="")
                     piece = self.matrix[j - 1][self.height - i - 1]
                     if piece == 1:
-                        piece = f"{col[3]}X{col[0]}"
+                        piece = f"X"
                     elif piece == 2:
-                        piece = f"{col[4]}O{col[0]}"
+                        piece = f"O"
                     elif piece == 0:
                         piece = " "
                     print(f"{piece}", end="")
-                    print(f"{col[2]}]{col[0]}", end="")
+                    print(f"]", end="")
 
         for i in range(0, self.height + 1):
             for j in range(0, self.width + 1):
@@ -60,7 +57,7 @@ class TFBoard():
 
     # put token into a column
     def putToken(self, player, column):
-        # find first nonzero entrie in column from top
+        # find first nonzero entry in column from top
         notification = f"New Player {player} token in column {column+1}"
         for i in range(self.height - 1, -1, -1):
             if i == 0 and self.matrix[column][i] == 0:
@@ -69,18 +66,24 @@ class TFBoard():
                 return
             if self.matrix[column][i] != 0:
                 if i == self.height - 1:
-                    print(f"COLUMN FULL!\nCan\'t place token in column {i}.")
+                    print(
+                        f"COLUMN FULL!\nCan\'t place token in column {column}."
+                    )
+                    self.drawBoard()
+                    print(self.possibleMoves())
+                    print(player, column)
+                    raise SystemExit
                 else:
                     self.matrix[column][i + 1] = player
                     print(f"{notification}, row {self.rows[i+1]}")
                 return
 
-        def possbileMoves(self):
-            movelist = ["r", "R", "l", "L"]
-            for i in range(len(self.matrix)):
-                if 0 in self.matrix[i]:
-                    movelist.append(i)
-            return movelist
+    def possibleMoves(self):
+        movelist = [7, 8] if self.turnNumber > 1 else []
+        for i in range(len(self.matrix)):
+            if 0 in self.matrix[i]:
+                movelist.append(i)
+        return movelist
 
     def checkWin(self):
         # check for win by column
@@ -95,7 +98,7 @@ class TFBoard():
                                           for token in column[r:r + 4]):
                         print(f"Win by column for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+1}")
-                        self.endGame = True
+                        self.endGame, self.winner = True, start
 
         # check for win by row
 
@@ -110,7 +113,7 @@ class TFBoard():
                                           for token in row[c:c + 4]):
                         print(f"Win by row for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r]}{c+4}")
-                        self.endGame = True
+                        self.endGame, self.winner = True, start
 
         def checkbltrDiagonals():
             for c in range(4):
@@ -121,7 +124,7 @@ class TFBoard():
                                           for token in diagonal):
                         print(f"Win by diagonal bltr for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r+3]}{c+4}")
-                        self.endGame = True
+                        self.endGame, self.winner = True, start
 
         def checktlbrDiagonals():
             for c in range(4):
@@ -132,7 +135,7 @@ class TFBoard():
                                           for token in diagonal):
                         print(f"Win by diagonal tlbr for player {start}")
                         print(f"{self.rows[r]}{c+1}-{self.rows[r-3]}{c+4}")
-                        self.endGame = True
+                        self.endGame, self.winner = True, start
 
         checkColumns()
         checkRows()
@@ -157,10 +160,10 @@ class TFBoard():
         self.matrix = list(list(x)[::-1] for x in zip(*self.matrix))
 
     def makeMove(self, turn):
-        if turn == "L" or turn == "l":
+        if turn == 8:
             self.rotateLeft()
             self.applyGravity()
-        elif turn == "R" or turn == "r":
+        elif turn == 9:
             self.rotateRight()
             self.applyGravity()
         elif int(turn) in [1, 2, 3, 4, 5, 6, 7]:
@@ -175,13 +178,11 @@ class TFBoard():
         while self.endGame is False:
             print(f"---Turn {self.turnNumber}:")
             turn = input(
-                f"Player {self.playerTurn}, make your move.\n(1,2,3,4,5,6,7,L,R)\n---"
+                f"Player {self.playerTurn}, make your move.\n{self.possibleMoves()}\n---"
             )
-            if turn not in [
-                    "1", "2", "3", "4", "5", "6", "7", "l", "L", "r", "R"
-            ]:
+            if turn not in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
                 print(
-                    f"WRONG INPUT {turn}!\nInput must be L, R or an integer between 1 and 7."
+                    f"WRONG INPUT {turn}!\nInput must be 8 for left, 9 for right or an integer between 1 and 7."
                 )
                 continue  # restart turn (playerTurn is not changed)
             # turn changes the board
@@ -189,7 +190,6 @@ class TFBoard():
             # check for wins
             self.checkWin()
             if self.endGame is True:
-                self.winner = self.playerTurn
                 break
             # check for draws
             if self.checkDraw():

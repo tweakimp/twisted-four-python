@@ -143,20 +143,15 @@ def createTests(x):
         testdata.write("]\n")
 
 
-@stopwatch
-def createFlatTests(x):
-    with open("testdata.py", "w") as testdata:
-        testdata.write(f"tests = [\n")
-        for n in range(x):
-            board = randomBoard()
-            saved, turn, player = board.gameLoop()
-            saved = flatMatrix(saved)
-            if player == 2:
-                for i in range(len(saved)):
-                    if saved[i] != 0:
-                        saved[i] = 1 if saved[i] == 2 else 2
-            testdata.write(f"    [{str(saved)}, '{str(turn)}', {str(n)}],\n")
-        testdata.write("]\n")
-
-
-createFlatTests(1000)
+def flatTests(x):
+    testdata = []
+    for _ in range(x):
+        board = randomBoard()
+        saved, turn, player = board.gameLoop()
+        saved = flatMatrix(saved)
+        if player == 2:
+            for i in range(len(saved)):
+                if saved[i] != 0:
+                    saved[i] = 1 if saved[i] == 2 else 2
+        testdata.append([saved, turn])
+    return testdata

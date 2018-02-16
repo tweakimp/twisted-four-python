@@ -2,7 +2,7 @@ import pickle
 import random
 from copy import deepcopy
 
-from math import exp, log
+from math import exp
 
 # create matrix of size f*s, initialized with randomFloat() entries
 # with f, s sizes of first and second layer
@@ -14,10 +14,16 @@ def createRandomWeights(firstlayer, secondlayer):
 
 
 # normalize x to be a value between 0 and 1
-def normalize(x):
-    # return 1 / (1 + exp(-x))  # Logistic
-    # return 0 if x <= 0 else x # Rectified linear
-    return 0 if x <= 0 else 1 / (1 + exp(-x))  # combined
+def normcombo(x):
+    return 0 if x <= 0 else 1 / (1 + exp(-x))
+
+
+def normlogi(x):
+    return 1 / (1 + exp(-x))
+
+
+def normrect(x):
+    return 0 if x <= 0 else x
 
 
 # create a random float number between -5 and 5# create a random float number between -5 and 5
@@ -33,10 +39,11 @@ def randomChange(jitter):
 # creates value list of that size
 # creates bias list of that size, initialized with randomFloat() entries
 class LAYER():
-    def __init__(self, size):
+    def __init__(self, size, methodnorm):
         self.size = size
         self.values = [0 for _ in range(self.size)]
         self.biases = [randomFloat(-2, 0) for _ in range(self.size)]
+        self.methodnorm = methodnorm
 
     # for each value of layer, sum products of weight and input of the
     # corresponsing input values and weightMatrix weights
@@ -46,7 +53,15 @@ class LAYER():
             current = 0
             for j in range(incomingLayer.size):
                 current += incomingLayer.values[j] * weightMatrix[i][j]
-            self.values[i] = normalize(self.biases[i] + current)
+            if self.methodnorm == "rect":
+                self.values[i] = normrect(self.biases[i] + current)
+            elif self.methodnorm == "logi":
+                self.values[i] = normlogi(self.biases[i] + current)
+            elif self.methodnorm == "combo":
+                self.values[i] = normcombo(self.biases[i] + current)
+            else:
+                print("INVALID PROPGATE METHOD CHOSEN!")
+                raise SystemExit
 
 
 # neural net class
@@ -55,17 +70,17 @@ class NEURALNET():
     def __init__(self):
         self.sizes = {
             "input": 147,
-            "hidden1": 100,
-            "hidden2": 100,
-            "hidden3": 100,
+            "hidden1": 50,
+            "hidden2": 50,
+            "hidden3": 50,
             "output": 9
         }
 
-        self.inputlayer = LAYER(self.sizes["input"])
-        self.hidden1 = LAYER(self.sizes["hidden1"])
-        self.hidden2 = LAYER(self.sizes["hidden2"])
-        self.hidden3 = LAYER(self.sizes["hidden3"])
-        self.outputlayer = LAYER(self.sizes["output"])
+        self.inputlayer = LAYER(self.sizes["input"], "logi")
+        self.hidden1 = LAYER(self.sizes["hidden1"], "logi")
+        self.hidden2 = LAYER(self.sizes["hidden2"], "logi")
+        self.hidden3 = LAYER(self.sizes["hidden3"], "logi")
+        self.outputlayer = LAYER(self.sizes["output"], "combo")
 
         self.in_h1_weights = createRandomWeights(self.inputlayer, self.hidden1)
         self.h1_h2_weights = createRandomWeights(self.hidden1, self.hidden2)
@@ -76,9 +91,9 @@ class NEURALNET():
     # feeds incoming data through the net, calculating the values of the
     # following layer and ultimately giving the index of the output
     # neuron with the largest value
-    def feed(self, inputdata):
+    def feed(self, inputdata, possibleMoves):
         self.inputlayer.values = [0 for x in self.inputlayer.values]
-        # input data
+        # input data (3 values for each game cell version)
         for i in range(len(inputdata)):
             if inputdata[i] == 0:
                 self.inputlayer.values[i] = 1
@@ -86,7 +101,7 @@ class NEURALNET():
                 self.inputlayer.values[i + 49] = 1
             elif inputdata[i] == -1:
                 self.inputlayer.values[i + 98] = 1
-        # # input data
+        # # input data ( 1 value for each game cell version)
         # for i in range(self.inputlayer.size):
         #     self.inputlayer.values[i] = normalize(
         #         self.inputlayer.biases[i] + inputdata[i])
@@ -99,6 +114,10 @@ class NEURALNET():
         # h3 to output
         self.outputlayer.propagate(self.hidden3, self.h3_out_weights)
         # output
+        for i in range(len(self.outputlayer.values)):
+            self.outputlayer.values[
+                i] = -1 if i not in possibleMoves else self.outputlayer.values[
+                    i]
         return self.outputlayer.values.index(max(self.outputlayer.values))
 
     def saveState(self, name="current"):
