@@ -78,11 +78,19 @@ class TFBoard():
                     print(f"{notification}, row {self.rows[i+1]}")
                 return
 
-    def possibleMoves(self):
+    def possibleMoves(self, human=False):
         movelist = [7, 8] if self.turnNumber > 1 else []
         for i in range(len(self.matrix)):
             if 0 in self.matrix[i]:
                 movelist.append(i)
+        if human is True:
+            for i in range(len(movelist)):
+                if movelist[i] == 7:
+                    movelist[i] = "l"
+                elif movelist[i] == 8:
+                    movelist[i] = "r"
+                else:
+                    movelist[i] += 1
         return movelist
 
     def checkWin(self):
@@ -178,7 +186,7 @@ class TFBoard():
         while self.endGame is False:
             print(f"---Turn {self.turnNumber}:")
             turn = input(
-                f"Player {self.playerTurn}, make your move.\n{self.possibleMoves()}\n---"
+                f"Player {self.playerTurn}, make your move.\n{self.possibleMoves(human=True)}\n---"
             )
             if turn not in ["1", "2", "3", "4", "5", "6", "7", "8", "9"]:
                 print(
